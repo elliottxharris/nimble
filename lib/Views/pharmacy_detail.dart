@@ -157,33 +157,35 @@ class _PharmacyDetailState extends State<PharmacyDetail> {
                       ],
                     ),
                   ),
-                  Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Consumer<OrderList>(
-                        builder: (context, provider, child) {
-                          bool hasOrdered = false;
-                          List<Order> orders = provider.getOrders;
-                          Order order = orders.firstWhere(
-                            (element) => element.pharmacy == pharmacy.name,
-                            orElse: () {
-                              return Order(pharmacy: pharmacy.name, meds: []);
-                            },
-                          );
-                          return Column(
-                            children: [
-                              const Text('Previous Order'),
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: order.meds.length,
-                                itemBuilder: (context, index) => Center(
-                                  child: Text(order.meds[index])
-                                ),
-                              )
-                            ],
-                          );
-                        },
-                      )),
+                  Visibility(
+                    visible: widget.pharmacy.hasOrderedFrom,
+                    child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Consumer<OrderList>(
+                          builder: (context, provider, child) {
+                            List<Order> orders = provider.getOrders;
+                            Order order = orders.firstWhere(
+                              (element) => element.pharmacy == pharmacy.name,
+                              orElse: () {
+                                return Order(pharmacy: pharmacy.name, meds: []);
+                              },
+                            );
+                            return Column(
+                              children: [
+                                const Text('Previous Order'),
+                                ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: order.meds.length,
+                                  itemBuilder: (context, index) => Center(
+                                    child: Text(order.meds[index])
+                                  ),
+                                )
+                              ],
+                            );
+                          },
+                        )),
+                  ),
                 ],
               ),
             );
