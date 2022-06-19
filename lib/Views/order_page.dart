@@ -1,9 +1,5 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/src/foundation/key.dart';
-import 'package:flutter/src/widgets/framework.dart';
-
 import 'package:http/http.dart' as http;
 import 'package:nimble_test/Model/order.dart';
 import 'package:nimble_test/Model/order_list.dart';
@@ -120,12 +116,15 @@ class _OrderPageState extends State<OrderPage> {
 
               OrderList provider = Provider.of<OrderList>(context, listen: false);
               provider.addOrder(Order(pharmacy: widget.pharmacy, meds: selected));
+
               String lengthsString = sharedPreferences.getString('lengths')!;
               List<dynamic> lengths = jsonDecode(lengthsString);
               lengths[lengths.indexWhere((element) => element['name'] == widget.pharmacy)]['ordered'] = true;
               sharedPreferences.setString('lengths', jsonEncode(lengths));
+
               print('Pharmacy: ${widget.pharmacy}');
               print('Meds: $selected');
+
               Navigator.of(context).pop();
             }, child: const Text('Place'),),
           ),)

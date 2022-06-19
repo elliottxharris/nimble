@@ -1,12 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:nimble_test/Model/detailed_pharmacy.dart';
-import 'package:nimble_test/Model/order_list.dart';
 import 'package:nimble_test/Model/pharmacy.dart';
 import 'package:nimble_test/Views/order_page.dart';
 import 'package:nimble_test/Views/pharmacy_detail.dart';
-import 'package:provider/provider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
