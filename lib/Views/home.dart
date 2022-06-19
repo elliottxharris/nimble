@@ -44,37 +44,45 @@ class _HomepageState extends State<Homepage> {
   ''';
 
   Future<String> findClosest() async {
-    LatLng currentLocation = LatLng(37.48771670017411, -122.22652739630438);
-    List<DetailedPharmacy> detailedPharmacies = [];
-    Iterable<String> ids = pharmacies.map((e) => e.id);
-    List<Map<String, dynamic>> lengths = [];
-
-    for (var id in ids) {
-      http.Response res = await http.get(Uri.parse(
-          'https://api-qa-demo.nimbleandsimple.com/pharmacies/info/$id'));
-
-      if (res.statusCode == 200) {
-        detailedPharmacies
-            .add(DetailedPharmacy.fromJson(jsonDecode(res.body)['value']));
-      }
-    }
-
-    for (var pharmacy in detailedPharmacies) {
-      LatLng pharmacyLocation = LatLng(pharmacy.lat, pharmacy.long);
-      Distance distance = const Distance();
-
-      lengths.add({
-        'name': pharmacy.name,
-        'length': distance(currentLocation, pharmacyLocation)
-      });
-    }
-
-    lengths.sort(((a, b) => a['length'].compareTo(b['length'])));
-
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    sharedPreferences.setString('lengths', jsonEncode(lengths));
+    String? lengthsString = sharedPreferences.getString('lengths');
+    if (lengthsString == null) {
+      LatLng currentLocation = LatLng(37.48771670017411, -122.22652739630438);
+      List<DetailedPharmacy> detailedPharmacies = [];
+      Iterable<String> ids = pharmacies.map((e) => e.id);
+      List<Map<String, dynamic>> lengths = [];
 
-    return lengths.first['name'];
+      for (var id in ids) {
+        http.Response res = await http.get(Uri.parse(
+            'https://api-qa-demo.nimbleandsimple.com/pharmacies/info/$id'));
+
+        if (res.statusCode == 200) {
+          detailedPharmacies
+              .add(DetailedPharmacy.fromJson(jsonDecode(res.body)['value']));
+        }
+      }
+
+      for (var pharmacy in detailedPharmacies) {
+        LatLng pharmacyLocation = LatLng(pharmacy.lat, pharmacy.long);
+        Distance distance = const Distance();
+
+        lengths.add({
+          'name': pharmacy.name,
+          'length': distance(currentLocation, pharmacyLocation),
+          'ordered': false
+        });
+      }
+
+      lengths.sort(((a, b) => a['length'].compareTo(b['length'])));
+
+      sharedPreferences.setString('lengths', jsonEncode(lengths));
+
+      return lengths.first['name'];
+    } else {
+      List<dynamic> lengths = jsonDecode(lengthsString);
+
+      return lengths.firstWhere((element) => element['ordered'] == false)['name'];
+    }
   }
 
   @override
@@ -108,7 +116,7 @@ class _HomepageState extends State<Homepage> {
             child: Padding(
               padding: const EdgeInsets.only(bottom: 20),
               child: ElevatedButton(
-                onPressed: () async{
+                onPressed: () async {
                   String closest = await findClosest();
                   Navigator.of(context).push(
                     MaterialPageRoute(
