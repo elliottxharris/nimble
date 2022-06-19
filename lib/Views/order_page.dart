@@ -115,6 +115,8 @@ class _OrderPageState extends State<OrderPage> {
             child: ElevatedButton(onPressed: () {
               OrderList provider = Provider.of<OrderList>(context, listen: false);
               provider.addOrder(Order(pharmacy: widget.pharmacy, meds: selected));
+              print('Pharmacy: ${widget.pharmacy}');
+              print('Meds: $selected');
               Navigator.of(context).pop();
             }, child: const Text('Place'),),
           ),)
