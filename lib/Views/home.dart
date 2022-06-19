@@ -20,6 +20,7 @@ class Homepage extends StatefulWidget {
 
 class _HomepageState extends State<Homepage> {
   late List<Pharmacy> pharmacies;
+  late Future<String?> lengthsString;
   final String json = '''
   {
     "pharmacies": [
@@ -81,8 +82,20 @@ class _HomepageState extends State<Homepage> {
     } else {
       List<dynamic> lengths = jsonDecode(lengthsString);
 
-      return lengths.firstWhere((element) => element['ordered'] == false)['name'];
+      return lengths
+          .firstWhere((element) => element['ordered'] == false)['name'];
     }
+  }
+
+  Future<String?> getLengths() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return sharedPreferences.getString('lengths');
+  }
+
+  @override
+  void initState() {
+    lengthsString = getLengths();
+    super.initState();
   }
 
   @override
@@ -93,24 +106,52 @@ class _HomepageState extends State<Homepage> {
       appBar: AppBar(title: const Text('Home')),
       body: Stack(
         children: [
-          ListView.separated(
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) =>
-                            PharmacyDetail(pharmacy: pharmacies[index])));
-                  },
-                  child: ListTile(
-                    title: Text(pharmacies[index].name),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
+          FutureBuilder(
+            future: lengthsString,
+            builder: (context, snap) {
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(),
                 );
-              },
-              separatorBuilder: (context, index) => const Divider(
-                    color: Colors.black,
-                  ),
-              itemCount: pharmacies.length),
+              }
+              if (snap.hasData) {
+                List<dynamic> lengths = jsonDecode(snap.data!.toString());
+                List<String> filtered = List.of(lengths
+                    .where((element) => element['ordered'] == true)
+                    .map((e) => e['name']));
+
+                pharmacies = List.of(pharmacies.map((e) {
+                  if (filtered.contains(e.name)) {
+                    e.hasOrderedFrom = true;
+                  }
+
+                  return e;
+                }));
+              }
+              return ListView.separated(
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) =>
+                                PharmacyDetail(pharmacy: pharmacies[index])));
+                      },
+                      child: ListTile(
+                        title: Row(children: [
+                          Text(pharmacies[index].name),
+                          if (pharmacies[index].hasOrderedFrom)
+                            const Icon(Icons.check)
+                        ]),
+                        trailing: const Icon(Icons.chevron_right),
+                      ),
+                    );
+                  },
+                  separatorBuilder: (context, index) => const Divider(
+                        color: Colors.black,
+                      ),
+                  itemCount: pharmacies.length);
+            },
+          ),
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -118,13 +159,16 @@ class _HomepageState extends State<Homepage> {
               child: ElevatedButton(
                 onPressed: () async {
                   String closest = await findClosest();
-                  Navigator.of(context).push(
+                  await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => OrderPage(
                         pharmacy: closest,
                       ),
                     ),
                   );
+                  setState(() {
+                    lengthsString = getLengths();
+                  });
                 },
                 child: const Text('Order'),
               ),
