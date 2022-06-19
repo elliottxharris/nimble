@@ -21,6 +21,7 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
   late List<Pharmacy> pharmacies;
   late Future<String?> lengthsString;
+  bool gettingLocations = false;
   final String json = '''
   {
     "pharmacies": [
@@ -157,21 +158,33 @@ class _HomepageState extends State<Homepage> {
             child: Padding(
               padding: const EdgeInsets.only(bottom: 20),
               child: ElevatedButton(
-                onPressed: () async {
-                  String closest = await findClosest();
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => OrderPage(
-                        pharmacy: closest,
+                  onPressed: () async {
+                    setState(() {
+                      gettingLocations = true;
+                    });
+                    String closest = await findClosest();
+                    setState(() {
+                      gettingLocations = false;
+                    });
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => OrderPage(
+                          pharmacy: closest,
+                        ),
                       ),
-                    ),
-                  );
-                  setState(() {
-                    lengthsString = getLengths();
-                  });
-                },
-                child: const Text('Order'),
-              ),
+                    );
+                    setState(() {
+                      lengthsString = getLengths();
+                    });
+                  },
+                  child: (gettingLocations)
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 4),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Order')),
             ),
           )
         ],
